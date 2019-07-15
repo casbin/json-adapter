@@ -18,8 +18,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/casbin/casbin"
-	"github.com/casbin/casbin/util"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/util"
 )
 
 func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
@@ -34,7 +34,7 @@ func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
 func TestAdapter(t *testing.T) {
 	// Because the JSON Buffer is empty at first,
 	// so we need to load the policy from the file adapter (.CSV) first.
-	e := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
 
 	b := []byte{}
 	a := NewAdapter(&b)
@@ -58,6 +58,6 @@ func TestAdapter(t *testing.T) {
 	// Create an adapter and an enforcer.
 	// NewEnforcer() will load the policy automatically.
 	a = NewAdapter(&b)
-	e = casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, _ = casbin.NewEnforcer("examples/rbac_model.conf", a)
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }

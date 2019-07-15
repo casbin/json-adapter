@@ -13,15 +13,15 @@ JSON Adapter is the [JSON (JavaScript Object Notation)](https://www.json.org/) a
 package main
 
 import (
-	"github.com/casbin/casbin"
-	"github.com/casbin/json-adapter"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/json-adapter/v2"
 )
 
 func main() {
 	// Initialize a JSON adapter and use it in a Casbin enforcer:
 	b := []byte{} // b stores Casbin policy in JSON bytes.
 	a := jsonadapter.NewAdapter(&b) // Use b as the data source. 
-	e := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 	
 	// Load the policy from JSON bytes b.
 	e.LoadPolicy()

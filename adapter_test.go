@@ -33,10 +33,17 @@ func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
 	}
 }
 
+func errorExpected(t *testing.T, err error) {
+	if err == nil {
+		t.Error("expected error")
+	}
+}
+
 func TestAdapter(t *testing.T) {
 	b, _ := ioutil.ReadFile(filepath.Join("examples", "rbac_policy.json"))
 	a := NewAdapter(&b)
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e.GetPolicy()
 
 	// Now the JSON Buffer has policy, so we can provide a normal use case.
 	// Create an adapter and an enforcer.
@@ -44,4 +51,36 @@ func TestAdapter(t *testing.T) {
 	a = NewAdapter(&b)
 	e, _ = casbin.NewEnforcer("examples/rbac_model.conf", a)
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
+
+	//Test Clear Policy
+	e.ClearPolicy()
+	testGetPolicy(t, e, [][]string{})
+
+	// Test Add Policy
+	_, _ = e.AddPolicy("alice", "data1", "read")
+	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}})
+
+	// Add policies with up to 6 rule elements
+	_, _ = e.AddPolicy("alice", "data1", "read", "indeterminate")
+	_, _ = e.AddPolicy("alice", "domain1", "data1", "write", "indeterminate")
+	_, _ = e.AddPolicy("alice", "domain1", "data1", "write", "indeterminate", "foo")
+	_, _ = e.AddPolicy("alice", "domain1", "data1", "write", "indeterminate", "foo", "bar")
+
+	// Add grouping policy
+	_, _ = e.AddGroupingPolicy("alice", "data2_admin")
+
+	// Test Save Policy
+	expectedPolicies := len(e.GetPolicy()) + len(e.GetGroupingPolicy())
+	_ = e.SavePolicy()
+	if len(a.policy) != expectedPolicies {
+		t.Errorf("expected %d policies, got %d", expectedPolicies, len(a.policy))
+	}
+
+	// Not implemented methods
+	err := a.AddPolicy("", "", []string{""})
+	errorExpected(t, err)
+	err = a.RemovePolicy("", "", []string{""})
+	errorExpected(t, err)
+	err = a.RemoveFilteredPolicy("", "", 0, "")
+	errorExpected(t, err)
 }

@@ -15,7 +15,9 @@
 package jsonadapter
 
 import (
+	"io/ioutil"
 	"log"
+	"path/filepath"
 	"testing"
 
 	"github.com/casbin/casbin/v2"
@@ -32,27 +34,9 @@ func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
 }
 
 func TestAdapter(t *testing.T) {
-	// Because the JSON Buffer is empty at first,
-	// so we need to load the policy from the file adapter (.CSV) first.
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
-
-	b := []byte{}
+	b, _ := ioutil.ReadFile(filepath.Join("examples", "rbac_policy.json"))
 	a := NewAdapter(&b)
-	// This is a trick to save the current policy to the JSON Buffer.
-	// We can't call e.SavePolicy() because the adapter in the enforcer is still the file adapter.
-	// The current policy means the policy in the Casbin enforcer (aka in memory).
-	a.SavePolicy(e.GetModel())
-
-	// Clear the current policy.
-	e.ClearPolicy()
-	testGetPolicy(t, e, [][]string{})
-
-	// Load the policy from JSON Buffer.
-	a.LoadPolicy(e.GetModel())
-	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
-
-	// Note: you don't need to look at the above code
-	// if you already have a working JSON Buffer with policy inside.
+	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 
 	// Now the JSON Buffer has policy, so we can provide a normal use case.
 	// Create an adapter and an enforcer.

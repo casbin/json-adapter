@@ -15,7 +15,9 @@
 package jsonadapter
 
 import (
+	"io/ioutil"
 	"log"
+	"path/filepath"
 	"testing"
 
 	"github.com/casbin/casbin/v2"
@@ -31,28 +33,17 @@ func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
 	}
 }
 
+func errorExpected(t *testing.T, err error) {
+	if err == nil {
+		t.Error("expected error")
+	}
+}
+
 func TestAdapter(t *testing.T) {
-	// Because the JSON Buffer is empty at first,
-	// so we need to load the policy from the file adapter (.CSV) first.
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
-
-	b := []byte{}
+	b, _ := ioutil.ReadFile(filepath.Join("examples", "rbac_policy.json"))
 	a := NewAdapter(&b)
-	// This is a trick to save the current policy to the JSON Buffer.
-	// We can't call e.SavePolicy() because the adapter in the enforcer is still the file adapter.
-	// The current policy means the policy in the Casbin enforcer (aka in memory).
-	a.SavePolicy(e.GetModel())
-
-	// Clear the current policy.
-	e.ClearPolicy()
-	testGetPolicy(t, e, [][]string{})
-
-	// Load the policy from JSON Buffer.
-	a.LoadPolicy(e.GetModel())
-	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
-
-	// Note: you don't need to look at the above code
-	// if you already have a working JSON Buffer with policy inside.
+	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e.GetPolicy()
 
 	// Now the JSON Buffer has policy, so we can provide a normal use case.
 	// Create an adapter and an enforcer.
@@ -60,4 +51,36 @@ func TestAdapter(t *testing.T) {
 	a = NewAdapter(&b)
 	e, _ = casbin.NewEnforcer("examples/rbac_model.conf", a)
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
+
+	//Test Clear Policy
+	e.ClearPolicy()
+	testGetPolicy(t, e, [][]string{})
+
+	// Test Add Policy
+	_, _ = e.AddPolicy("alice", "data1", "read")
+	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}})
+
+	// Add policies with up to 6 rule elements
+	_, _ = e.AddPolicy("alice", "data1", "read", "indeterminate")
+	_, _ = e.AddPolicy("alice", "domain1", "data1", "write", "indeterminate")
+	_, _ = e.AddPolicy("alice", "domain1", "data1", "write", "indeterminate", "foo")
+	_, _ = e.AddPolicy("alice", "domain1", "data1", "write", "indeterminate", "foo", "bar")
+
+	// Add grouping policy
+	_, _ = e.AddGroupingPolicy("alice", "data2_admin")
+
+	// Test Save Policy
+	expectedPolicies := len(e.GetPolicy()) + len(e.GetGroupingPolicy())
+	_ = e.SavePolicy()
+	if len(a.policy) != expectedPolicies {
+		t.Errorf("expected %d policies, got %d", expectedPolicies, len(a.policy))
+	}
+
+	// Not implemented methods
+	err := a.AddPolicy("", "", []string{""})
+	errorExpected(t, err)
+	err = a.RemovePolicy("", "", []string{""})
+	errorExpected(t, err)
+	err = a.RemoveFilteredPolicy("", "", 0, "")
+	errorExpected(t, err)
 }

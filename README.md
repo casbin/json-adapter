@@ -38,6 +38,20 @@ func main() {
 }
 ```
 
+## Policy JSON
+
+The following illustrates the expected JSON format for a policy.  The [rbac_policy.json](examples/rbac_policy.json) has the same policy found in [rbac_policy.csv](examples/rbac_policy.csv).
+
+```json
+[
+  {"PType":"p","V0":"alice","V1":"data1","V2":"read"},
+  {"PType":"p","V0":"bob","V1":"data2","V2":"write"},
+  {"PType":"p","V0":"data2_admin","V1":"data2","V2":"read"},
+  {"PType":"p","V0":"data2_admin","V1":"data2","V2":"write"},
+  {"PType":"g","V0":"alice","V1":"data2_admin"}
+]
+```
+
 ## Getting Help
 
 - [Casbin](https://github.com/casbin/casbin)

@@ -56,6 +56,10 @@ func (a *Adapter) saveToBuffer() error {
 }
 
 func (a *Adapter) loadFromBuffer() error {
+	if len(*a.source) == 0 {
+		return nil
+	}
+
 	var policy []CasbinRule
 	err := json.Unmarshal(*a.source, &policy)
 	if err == nil {

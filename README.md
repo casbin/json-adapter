@@ -1,4 +1,3 @@
-@@ -1,5 +1,33 @@
 JSON Adapter [![Build Status](https://travis-ci.org/casbin/json-adapter.svg?branch=master)](https://travis-ci.org/casbin/json-adapter) [![Coverage Status](https://coveralls.io/repos/github/casbin/json-adapter/badge.svg?branch=master)](https://coveralls.io/github/casbin/json-adapter?branch=master) [![Godoc](https://godoc.org/github.com/casbin/json-adapter?status.svg)](https://godoc.org/github.com/casbin/json-adapter)
 ====
 
